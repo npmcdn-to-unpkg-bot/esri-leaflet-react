@@ -1,0 +1,35 @@
+body {
+  margin:0;
+  padding:0;
+}
+#map {
+  position: absolute;
+  top:0;
+  bottom:0;
+  /*right:0;*/
+  left:0;
+  width: 70%;
+  z-index: 50;
+}
+.mainPanel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  background-color: #fff;
+  overflow: auto;
+  overflow-x: hidden;
+  z-index: 100;
+}
+.panelWr {
+  margin: 15px;
+}
+.btn {
+  display: inline-block;
+  margin: 0 10px;
+  padding: 0 5px;
+  line-height: 32px;
+  border: 1px solid #666;
+  cursor: pointer;
+}
