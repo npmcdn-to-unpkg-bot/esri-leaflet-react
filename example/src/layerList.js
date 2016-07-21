@@ -5,7 +5,7 @@ let layerList = {
     {
       url: 'http://gisweb.chebtelekom.ru:8080/arcgis/rest/services/OKS/oks_culture/FeatureServer/0',
       popup: false,
-      editor: false
+      editable: false
     },
     kap_rem_dor
   ]

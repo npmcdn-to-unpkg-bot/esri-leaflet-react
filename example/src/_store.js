@@ -4,5 +4,6 @@ export default {
   appStatus: {
     name: 'init',
     data: null
-  }
+  },
+  lastStatus: {}
 };

@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
 import _STORE from '../_store.js';
+import {updateStatus} from '../common.js';
+
+import EditProperties from './EditProperties.js';
 
 class MainPanel extends Component {
-  state = {
-    appStatus: _STORE.appStatus
-  }
+  // state = {
+  //   appStatus: _STORE.appStatus
+  // }
 
   switchToEdit (layerId) {
     let status;
@@ -12,7 +15,8 @@ class MainPanel extends Component {
       status = {
         name: "edit",
         data: {
-          layerId: layerId
+          layerId: layerId,
+          feature: null
         }
       };
     } else {
@@ -21,11 +25,8 @@ class MainPanel extends Component {
         data: null
       };
     }
-    // _STORE.appStatus = status;
-    // this.setState({
-    //   appStatus: status
-    // });
-    this.props.updateMapStatus(status);
+    updateStatus(status);
+    this.props.updateMapStatus();
   }
 
   componentDidMount() {
@@ -36,8 +37,10 @@ class MainPanel extends Component {
     const _this = this;
     let titleHTML;
     let dataHTML = [];
+    let tmp;
+    let tmp2;
 
-    switch (this.props.appStatus.name) {
+    switch (_STORE.appStatus.name) {
 
       // ---------------------------------------
       case "browse":
@@ -49,24 +52,50 @@ class MainPanel extends Component {
               <span>
                 { layerInit.title }
               </span>
-              <span
-                className="btn"
-                onClick={
-                   () => {
-                     _this.switchToEdit(layerId);
-                   }
-                }
-              >
-                Edit
-              </span>
+              {
+                layerInit.editable ?
+                (<span
+                  className="btn"
+                  onClick={
+                     () => {
+                       _this.switchToEdit(layerId);
+                     }
+                  }
+                >
+                  Edit
+                </span>) :
+                false
+              }
             </div>
           ))
         });
         break;
       // ---------------------------------------
       case "showAsPopup":
-        console.log(_this.props.appStatus.data.featureJSON);
-        titleHTML = "Object from layer " + _STORE.layers[_this.props.appStatus.data.layerId].initData.title;
+        titleHTML = "Object from layer " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
+        tmp = [];
+        tmp2 = _STORE.layers[_STORE.appStatus.data.layerId].initData;
+        if (tmp2.propsField) {
+          Object.keys(tmp2.propsField).forEach(function (field, iter) {
+            const fieldName = tmp2.propsField[field];
+            const fieldVal = _STORE.appStatus.data.featureJSON.properties[field];
+            tmp.push((
+              <div key={"field_" + iter}>
+                <span>{fieldName}: </span>
+                <span>{fieldVal}</span>
+              </div>
+            ));
+          });
+        } else {
+          Object.keys(_STORE.appStatus.data.featureJSON.properties).forEach(function (field, iter) {
+            tmp.push((
+              <div key={"field_" + iter}>
+                <span>{field}: </span>
+                <span>{_STORE.appStatus.data.featureJSON.properties[field]}</span>
+              </div>
+            ));
+          });
+        }
         dataHTML = (
           <div>
             <div
@@ -79,26 +108,14 @@ class MainPanel extends Component {
             >
               Back to all layers
             </div>
-            <div>{_this.props.appStatus.data.featureJSON.id}</div>
+            <div>{tmp}</div>
           </div>
         );
         break;
       // ---------------------------------------
       case "edit":
-        titleHTML = "Edit layer: " + _STORE.layers[_this.props.appStatus.data.layerId].initData.title;
-        dataHTML = (
-          <div
-            className="btn"
-            onClick={
-              () => {
-                 _this.switchToEdit();
-              }
-            }
-          >
-            Close edit
-          </div>
-        )
-
+        dataHTML = (<EditProperties updateMapStatus={this.props.updateMapStatus} />);
+        titleHTML = "Edit layer: " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
         break;
     }
 

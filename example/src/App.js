@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import _STORE from './_store.js';
 
 import layerList from './layerList.js';
 
@@ -11,29 +12,28 @@ class App extends Component {
   }
 
   state = {
-    appStatus: {
-      name: 'init',
-      data: null
-    },
+    appStatus: _STORE.appStatus,
   }
 
-  updateMapStatus(status) {
-    this.setState({appStatus: status});
+  updateMapStatus() {
+    this.setState({appStatus: _STORE.appStatus});
   }
 
   render() {
-    console.log('status', this.state.appStatus)
+    console.log('last status', _STORE.lastStatus);
+    console.log('status', _STORE.appStatus);
+    console.log('-------------------------');
     return (
       <div>
         <Map
           baseMap="http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           layers={layerList.layers}
-          updateMapStatus={this.updateMapStatus.bind(this)}
+          updateMapStatus={::this.updateMapStatus}
         />
         <div className="mainPanel">
           <div className="panelWr">
             {
-              this.state.appStatus.name == "init" ? "Загрузка..." : <MainPanel appStatus={this.state.appStatus} updateMapStatus={this.updateMapStatus.bind(this)}/>
+              this.state.appStatus.name == "init" ? "Загрузка..." : <MainPanel updateMapStatus={::this.updateMapStatus}/>
             }
           </div>
         </div>

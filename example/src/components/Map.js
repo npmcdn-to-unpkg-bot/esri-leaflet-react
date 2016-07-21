@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import _STORE from '../_store.js';
+import {updateStatus} from '../common.js';
 
 class Map extends Component {
   constructor(props) {
@@ -9,19 +10,33 @@ class Map extends Component {
   onEachLayer (layerId) {
     const _this = this;
     _STORE.layers[layerId].layerObj.on('click', function (e) {
-      var feature = e.layer.toGeoJSON();
-      console.log(feature);
-      _this.props.updateMapStatus({
-        name: 'showAsPopup',
-        data: {
-          layerId: layerId,
-          featureJSON: e.layer.toGeoJSON()
-        }
-      });
+      if (_STORE.appStatus.name !== "edit") {
+        updateStatus({
+          name: 'showAsPopup',
+          data: {
+            layerId: layerId,
+            featureJSON: e.layer.toGeoJSON()
+            // propsField: _STORE.layers[layerId].initData.propsField
+          }
+        });
+        _this.props.updateMapStatus();
+      };
     });
   }
 
-  componentDidMount() {
+  initEdit (layerId, isInit) {
+    Object.keys(_STORE.layers[layerId].layerObj._layers).forEach(function (featureId) {
+      const feature = _STORE.layers[layerId].layerObj._layers[featureId];
+      if (isInit) {
+        feature.on('click', L.DomEvent.stop).on('click', feature.toggleEdit);
+      } else {
+        feature.off('click', L.DomEvent.stop).off('click', feature.toggleEdit);
+      }
+    });
+  }
+
+
+  componentDidMount () {
     const _this = this;
     _STORE.map = L.map('map', {editable: true}).setView([56.140763, 47.237491], 13);
     if (this.props.baseMap) {
@@ -40,10 +55,49 @@ class Map extends Component {
         _this.onEachLayer(iter);
       });
     }
-    this.props.updateMapStatus({name: 'browse'});
+
+    _STORE.map.editTools.on('editable:enable', function (e) {
+      const newStatus = {
+        name: "edit",
+        data: {
+          layerId: _STORE.appStatus.data.layerId,
+          feature: e.layer
+        }
+      };
+      if (_STORE.appStatus.data.feature) _STORE.appStatus.data.feature.disableEdit();
+      this.fire('editable:enabled');
+      updateStatus(newStatus);
+      _this.props.updateMapStatus();
+    });
+
+    _STORE.map.editTools.on('editable:disable', function (e) {
+      if (_STORE.appStatus.data) {
+        const newStatus = {
+          name: "edit",
+          data: {
+            layerId: _STORE.appStatus.data.layerId,
+            feature: null
+          }
+        };
+        // updateStatus(newStatus);
+        // _this.props.updateMapStatus();
+      }
+    });
+
+    updateStatus({name: 'browse'});
+    this.props.updateMapStatus();
   }
 
   render() {
+    if (_STORE.appStatus.name == "edit") {
+      this.initEdit(_STORE.appStatus.data.layerId, true);
+    }
+    if (_STORE.lastStatus.name == "edit") {
+      this.initEdit(_STORE.lastStatus.data.layerId);
+      if (_STORE.lastStatus.data.feature) {
+        _STORE.lastStatus.data.feature.disableEdit();
+      }
+    }
     return (<div id="map"></div>);
   }
 
