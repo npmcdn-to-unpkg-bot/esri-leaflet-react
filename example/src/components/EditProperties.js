@@ -20,11 +20,24 @@ class EditProperties extends Component {
     // appStatus: _STORE.appStatus,
   }
 
+  componentWillReceiveProps () {
+    const _this = this;
+    // _this.state.fields = {};
+    const data = {};
+    const feature = _STORE.appStatus.data.feature.toGeoJSON();
+    Object.keys(_STORE.layers[_STORE.appStatus.data.layerId].initData.propsField).forEach(function (field, iter) {
+      // const fieldName = _STORE.layers[_STORE.appStatus.data.layerId].initData.propsField[field];
+      const fieldVal = feature.properties[field];
+      data[field] = fieldVal;
+    });
+    _this.setState(data);
+  }
 
   cancelEdit () {
     if (_STORE.appStatus.data.feature) {
       const newStatus = {
         name: "edit",
+        subname: "noFeaturSelect",
         data: {
           layerId: _STORE.appStatus.data.layerId,
           feature: null
@@ -40,6 +53,7 @@ class EditProperties extends Component {
     // TODO: post-request for saving data
     updateStatus({
       name: 'edit',
+      subname: 'noFeaturSelect',
       data: {
         layerId: _STORE.appStatus.data.layerId,
         feature: null
@@ -51,29 +65,28 @@ class EditProperties extends Component {
   render () {
     const _this = this;
     let listHTML = [];
-    if (_STORE.appStatus.data.feature) {
-      const feature = _STORE.appStatus.data.feature.toGeoJSON();
-      Object.keys(_STORE.layers[_STORE.appStatus.data.layerId].initData.propsField).forEach(function (field, iter) {
-        const fieldName = _STORE.layers[_STORE.appStatus.data.layerId].initData.propsField[field];
-        const fieldVal = feature.properties[field];
-        listHTML.push((
-          <div key={"field_" + iter}>
-            <span>{fieldName}: </span>
-            <input
-              type="text"
-              defaultValue={fieldVal}
-              onChange={
-                (evnt) => {
-                  const tmp = {};
-                  tmp[field] = evnt.target.value;
-                  _this.setState(tmp);
-                }
+    // const feature = _STORE.appStatus.data.feature.toGeoJSON();
+    const feature = _this.state;
+    Object.keys(_STORE.layers[_STORE.appStatus.data.layerId].initData.propsField).forEach(function (field, iter) {
+      const fieldName = _STORE.layers[_STORE.appStatus.data.layerId].initData.propsField[field];
+      const fieldVal = feature[field];
+      listHTML.push((
+        <div key={"field_" + iter}>
+          <span>{fieldName}: </span>
+          <input
+            type="text"
+            value={fieldVal}
+            onChange={
+              (evnt) => {
+                const tmp = {};
+                tmp[field] = evnt.target.value;
+                _this.setState(tmp);
               }
-            />
-          </div>
-        ));
-      });
-    }
+            }
+          />
+        </div>
+      ));
+    });
 
     return (
       <div>

@@ -14,6 +14,7 @@ class MainPanel extends Component {
     if (layerId) {
       status = {
         name: "edit",
+        subname: "noFeaturSelect",
         data: {
           layerId: layerId,
           feature: null
@@ -22,6 +23,7 @@ class MainPanel extends Component {
     } else {
       status = {
         name: "browse",
+        subname: "allLayers",
         data: null
       };
     }
@@ -40,115 +42,113 @@ class MainPanel extends Component {
     let tmp;
     let tmp2;
 
-    switch (_STORE.appStatus.name) {
 
       // ---------------------------------------
-      case "browse":
-        titleHTML = "Browser";
-        Object.keys(_STORE.layers).forEach(function (layerId) {
-          const layerInit = _STORE.layers[layerId].initData;
-          dataHTML.push((
-            <div key={ "lay_" + layerId }>
-              <span>
-                { layerInit.title }
-              </span>
-              {
-                layerInit.editable ?
-                (<span
-                  className="btn"
-                  onClick={
-                     () => {
-                       _this.switchToEdit(layerId);
-                     }
-                  }
-                >
-                  Edit
-                </span>) :
-                false
-              }
+    if (_STORE.appStatus.name == "browse" && _STORE.appStatus.subname == "allLayers") {
+      titleHTML = "Browser";
+      Object.keys(_STORE.layers).forEach(function (layerId) {
+        const layerInit = _STORE.layers[layerId].initData;
+        dataHTML.push((
+          <div key={ "lay_" + layerId }>
+            <span>
+              { layerInit.title }
+            </span>
+            {
+              layerInit.editable ?
+              (<span
+                className="btn"
+                onClick={
+                   () => {
+                     _this.switchToEdit(layerId);
+                   }
+                }
+              >
+                Edit
+              </span>) :
+              false
+            }
+          </div>
+        ))
+      });
+    }
+    // ---------------------------------------
+    if (_STORE.appStatus.name == "browse" && _STORE.appStatus.subname == "featureDetail") {
+      titleHTML = "Object from layer " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
+      tmp = [];
+      tmp2 = _STORE.layers[_STORE.appStatus.data.layerId].initData;
+      if (tmp2.propsField) {
+        Object.keys(tmp2.propsField).forEach(function (field, iter) {
+          const fieldName = tmp2.propsField[field];
+          const fieldVal = _STORE.appStatus.data.featureJSON.properties[field];
+          tmp.push((
+            <div key={"field_" + iter}>
+              <span>{fieldName}: </span>
+              <span>{fieldVal}</span>
             </div>
-          ))
+          ));
         });
-        break;
-      // ---------------------------------------
-      case "showAsPopup":
-        titleHTML = "Object from layer " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
-        tmp = [];
-        tmp2 = _STORE.layers[_STORE.appStatus.data.layerId].initData;
-        if (tmp2.propsField) {
-          Object.keys(tmp2.propsField).forEach(function (field, iter) {
-            const fieldName = tmp2.propsField[field];
-            const fieldVal = _STORE.appStatus.data.featureJSON.properties[field];
-            tmp.push((
-              <div key={"field_" + iter}>
-                <span>{fieldName}: </span>
-                <span>{fieldVal}</span>
-              </div>
-            ));
-          });
-        } else {
-          Object.keys(_STORE.appStatus.data.featureJSON.properties).forEach(function (field, iter) {
-            tmp.push((
-              <div key={"field_" + iter}>
-                <span>{field}: </span>
-                <span>{_STORE.appStatus.data.featureJSON.properties[field]}</span>
-              </div>
-            ));
-          });
-        }
-        dataHTML = (
-          <div>
-            <div
-              className="btn"
-              onClick={
-                () => {
-                  _this.switchToEdit();
-                }
-              }
-            >
-              Back to all layers
+      } else {
+        Object.keys(_STORE.appStatus.data.featureJSON.properties).forEach(function (field, iter) {
+          tmp.push((
+            <div key={"field_" + iter}>
+              <span>{field}: </span>
+              <span>{_STORE.appStatus.data.featureJSON.properties[field]}</span>
             </div>
-            <div>{tmp}</div>
-          </div>
-        );
-        break;
-      // ---------------------------------------
-      case "edit":
-        dataHTML = (
-          <div>
-            <div
-              className="btn"
-              onClick={
-                () => {
-                   _this.switchToEdit();
-                }
+          ));
+        });
+      }
+      dataHTML = (
+        <div>
+          <div
+            className="btn"
+            onClick={
+              () => {
+                _this.switchToEdit();
               }
-            >
-              Close edit
-            </div>
+            }
+          >
+            Back to all layers
           </div>
-        );
-        titleHTML = "Edit layer: " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
-        break;
-      // ---------------------------------------
-      case "editFeature":
-        dataHTML = (
-          <div>
-            <div
-              className="btn"
-              onClick={
-                () => {
-                   _this.switchToEdit();
-                }
+          <div>{tmp}</div>
+        </div>
+      );
+    }
+    // ---------------------------------------
+    if (_STORE.appStatus.name == "edit" && _STORE.appStatus.subname == "noFeaturSelect") {
+      dataHTML = (
+        <div>
+          <div
+            className="btn"
+            onClick={
+              () => {
+                 _this.switchToEdit();
               }
-            >
-              Close edit
-            </div>
-            <EditProperties updateMapStatus={this.props.updateMapStatus} />
+            }
+          >
+            Close edit
           </div>
-        );
-        titleHTML = "Edit layer: " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
-        break;
+        </div>
+      );
+      titleHTML = "Edit layer: " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
+    }
+    // ---------------------------------------
+    if (_STORE.appStatus.name == "edit" && _STORE.appStatus.subname == "editFeature") {
+      dataHTML = (
+        <div>
+          <div
+            className="btn"
+            onClick={
+              () => {
+                 _this.switchToEdit();
+              }
+            }
+          >
+            Close edit
+          </div>
+          <EditProperties updateMapStatus={this.props.updateMapStatus} appStatus={_STORE.appStatus}/>
+        </div>
+      );
+      titleHTML = "Edit layer: " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
     }
 
 

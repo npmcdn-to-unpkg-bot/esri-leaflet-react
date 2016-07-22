@@ -10,9 +10,10 @@ class Map extends Component {
   onEachLayer (layerId) {
     const _this = this;
     _STORE.layers[layerId].layerObj.on('click', function (e) {
-      if (_STORE.appStatus.name !== "edit") {
+      if (_STORE.appStatus.name == "browse") {
         updateStatus({
-          name: 'showAsPopup',
+          name: 'browse',
+          subname: 'featureDetail',
           data: {
             layerId: layerId,
             featureJSON: e.layer.toGeoJSON()
@@ -23,7 +24,8 @@ class Map extends Component {
       };
       if (_STORE.appStatus.name == "edit") {
         updateStatus({
-          name: 'editFeature',
+          name: 'edit',
+          subname: 'editFeature',
           data: {
             layerId: layerId,
             feature: e.layer
@@ -34,16 +36,68 @@ class Map extends Component {
     });
   }
 
-  initEdit (layerId, isInit) {
-    console.log(isInit ? "init edit" : "disinit edit");
-    Object.keys(_STORE.layers[layerId].layerObj._layers).forEach(function (featureId) {
-      const feature = _STORE.layers[layerId].layerObj._layers[featureId];
-      if (isInit) {
-        feature.on('click', L.DomEvent.stop).on('click', feature.toggleEdit);
-      } else {
-        feature.off('click', L.DomEvent.stop).off('click', feature.toggleEdit);
-      }
-    });
+  isInitEdit () {
+    let isInit = false;
+    let isDisinit = false;
+    let layerId;
+    if (_STORE.appStatus.name == "edit" && _STORE.lastStatus.name == "browse") {
+      isInit = true;
+      isDisinit = false;
+      layerId = _STORE.appStatus.data.layerId;
+    }
+    if (
+      _STORE.appStatus.name == "browse" &&
+      _STORE.lastStatus.name == "edit" &&
+      _STORE.lastStatus.subname == "noFeaturSelect"
+    ) {
+      isInit = false;
+      isDisinit = true;
+      layerId = _STORE.lastStatus.data.layerId;
+    }
+    if (
+      _STORE.appStatus.name == "browse" &&
+      _STORE.lastStatus.name == "edit" &&
+      _STORE.lastStatus.subname == "editFeature"
+    ) {
+      isInit = false;
+      isDisinit = true;
+      layerId = _STORE.lastStatus.data.layerId;
+      _STORE.lastStatus.data.feature.disableEdit();
+    }
+    if (
+      _STORE.appStatus.name == "edit" &&
+      _STORE.appStatus.subname == "noFeaturSelect" &&
+      _STORE.lastStatus.name == "edit" &&
+      _STORE.lastStatus.subname == "editFeature"
+    ) {
+      isInit = false;
+      isDisinit = false;
+      _STORE.lastStatus.data.feature.disableEdit();
+    }
+    if (
+      _STORE.appStatus.name == "edit" &&
+      _STORE.appStatus.subname == "editFeature" &&
+      _STORE.lastStatus.name == "edit" &&
+      _STORE.lastStatus.subname == "editFeature"
+    ) {
+      isInit = false;
+      isDisinit = false;
+      _STORE.lastStatus.data.feature.disableEdit();
+      // _STORE.lastStatus.data.feature.toggleEdit;
+    }
+
+
+    if (isInit || isDisinit) {
+      Object.keys(_STORE.layers[layerId].layerObj._layers).forEach(function (featureId) {
+        const feature = _STORE.layers[layerId].layerObj._layers[featureId];
+        if (isInit) {
+          feature.on('click', L.DomEvent.stop).on('click', feature.toggleEdit);
+        } else if (isDisinit) {
+          feature.off('click', L.DomEvent.stop).off('click', feature.toggleEdit);
+        }
+      });
+    }
+    console.log(isInit ? "init edit" : isDisinit ? "disinit edit" : "nothing");
   }
 
 
@@ -68,20 +122,22 @@ class Map extends Component {
     }
 
     _STORE.map.editTools.on('editable:enable', function (e) {
-      const newStatus = {
-        name: "edit",
-        data: {
-          layerId: _STORE.appStatus.data.layerId,
-          feature: e.layer
-        }
-      };
-      if (_STORE.appStatus.data.feature) _STORE.appStatus.data.feature.disableEdit();
-      this.fire('editable:enabled');
-      updateStatus(newStatus);
-      _this.props.updateMapStatus();
+      console.log('1');
+      // const newStatus = {
+      //   name: "edit",
+      //   data: {
+      //     layerId: _STORE.appStatus.data.layerId,
+      //     feature: e.layer
+      //   }
+      // };
+      // if (_STORE.appStatus.data.feature) _STORE.appStatus.data.feature.disableEdit();
+      // this.fire('editable:enabled');
+      // updateStatus(newStatus);
+      // _this.props.updateMapStatus();
     });
 
     _STORE.map.editTools.on('editable:disable', function (e) {
+      console.log('2');
       if (_STORE.appStatus.data) {
         const newStatus = {
           name: "edit",
@@ -99,26 +155,16 @@ class Map extends Component {
       }
     });
 
-    updateStatus({name: 'browse'});
+    updateStatus({
+      name: 'browse',
+      subname: 'allLayers',
+      data: null
+    });
     this.props.updateMapStatus();
   }
 
   render() {
-    if (_STORE.appStatus.name == "edit" && _STORE.lastStatus.name == "browse") {
-      this.initEdit(_STORE.appStatus.data.layerId, true);
-    }
-    if (_STORE.appStatus.name == "browse" && _STORE.lastStatus.name == "edit") {
-      this.initEdit(_STORE.appStatus.data.layerId);
-    }
-    if (_STORE.appStatus.name == "browse" && _STORE.lastStatus.name == "editFeature") {
-      this.initEdit(_STORE.lastStatus.data.layerId);
-      _STORE.lastStatus.data.feature.disableEdit();
-    }
-    if (_STORE.lastStatus.name == "editFeature" && _STORE.appStatus.name == "edit") {
-      if (_STORE.lastStatus.data.feature && !_STORE.appStatus.data.feature) {
-        _STORE.lastStatus.data.feature.disableEdit();
-      }
-    }
+    this.isInitEdit();
     return (<div id="map"></div>);
   }
 

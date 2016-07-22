@@ -3,6 +3,7 @@ export default {
   layers: {},
   appStatus: {
     name: 'init',
+    subName: null,
     data: null
   },
   lastStatus: {}
