@@ -1,8 +1,26 @@
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 import _STORE from '../_store.js';
 import {updateStatus} from '../common.js';
 
 class EditProperties extends Component {
+  constructor(props) {
+    super(props);
+    const _this = this;
+    // _this.state.fields = {};
+    const feature = _STORE.appStatus.data.feature.toGeoJSON();
+    Object.keys(_STORE.layers[_STORE.appStatus.data.layerId].initData.propsField).forEach(function (field, iter) {
+      // const fieldName = _STORE.layers[_STORE.appStatus.data.layerId].initData.propsField[field];
+      const fieldVal = feature.properties[field];
+      _this.state[field] = fieldVal;
+    });
+  }
+
+  state = {
+    // appStatus: _STORE.appStatus,
+  }
+
+
   cancelEdit () {
     if (_STORE.appStatus.data.feature) {
       const newStatus = {
@@ -17,7 +35,21 @@ class EditProperties extends Component {
     }
   }
 
+  saveFeature () {
+    console.log(this.state);
+    // TODO: post-request for saving data
+    updateStatus({
+      name: 'edit',
+      data: {
+        layerId: _STORE.appStatus.data.layerId,
+        feature: null
+      }
+    });
+    this.props.updateMapStatus();
+  }
+
   render () {
+    const _this = this;
     let listHTML = [];
     if (_STORE.appStatus.data.feature) {
       const feature = _STORE.appStatus.data.feature.toGeoJSON();
@@ -27,7 +59,17 @@ class EditProperties extends Component {
         listHTML.push((
           <div key={"field_" + iter}>
             <span>{fieldName}: </span>
-            <span>{fieldVal}</span>
+            <input
+              type="text"
+              defaultValue={fieldVal}
+              onChange={
+                (evnt) => {
+                  const tmp = {};
+                  tmp[field] = evnt.target.value;
+                  _this.setState(tmp);
+                }
+              }
+            />
           </div>
         ));
       });
@@ -35,16 +77,6 @@ class EditProperties extends Component {
 
     return (
       <div>
-        <div
-          className="btn"
-          onClick={
-            () => {
-               _this.switchToEdit();
-            }
-          }
-        >
-          Close edit
-        </div>
         {
           !_STORE.appStatus.data.feature ?
             (
@@ -87,6 +119,7 @@ class EditProperties extends Component {
                 </div>
                   <div
                     className="btn"
+                    onClick={ this.saveFeature.bind(this) }
                   >
                     Save
                   </div>

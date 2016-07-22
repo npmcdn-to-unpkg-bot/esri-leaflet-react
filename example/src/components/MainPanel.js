@@ -114,7 +114,39 @@ class MainPanel extends Component {
         break;
       // ---------------------------------------
       case "edit":
-        dataHTML = (<EditProperties updateMapStatus={this.props.updateMapStatus} />);
+        dataHTML = (
+          <div>
+            <div
+              className="btn"
+              onClick={
+                () => {
+                   _this.switchToEdit();
+                }
+              }
+            >
+              Close edit
+            </div>
+          </div>
+        );
+        titleHTML = "Edit layer: " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
+        break;
+      // ---------------------------------------
+      case "editFeature":
+        dataHTML = (
+          <div>
+            <div
+              className="btn"
+              onClick={
+                () => {
+                   _this.switchToEdit();
+                }
+              }
+            >
+              Close edit
+            </div>
+            <EditProperties updateMapStatus={this.props.updateMapStatus} />
+          </div>
+        );
         titleHTML = "Edit layer: " + _STORE.layers[_STORE.appStatus.data.layerId].initData.title;
         break;
     }

@@ -21,10 +21,21 @@ class Map extends Component {
         });
         _this.props.updateMapStatus();
       };
+      if (_STORE.appStatus.name == "edit") {
+        updateStatus({
+          name: 'editFeature',
+          data: {
+            layerId: layerId,
+            feature: e.layer
+          }
+        });
+        _this.props.updateMapStatus();
+      }
     });
   }
 
   initEdit (layerId, isInit) {
+    console.log(isInit ? "init edit" : "disinit edit");
     Object.keys(_STORE.layers[layerId].layerObj._layers).forEach(function (featureId) {
       const feature = _STORE.layers[layerId].layerObj._layers[featureId];
       if (isInit) {
@@ -79,6 +90,10 @@ class Map extends Component {
             feature: null
           }
         };
+        // if (_STORE.lastStatus.data.feature) {
+        //   _STORE.lastStatus.data.feature.disableEdit();
+        // }
+
         // updateStatus(newStatus);
         // _this.props.updateMapStatus();
       }
@@ -89,12 +104,18 @@ class Map extends Component {
   }
 
   render() {
-    if (_STORE.appStatus.name == "edit") {
+    if (_STORE.appStatus.name == "edit" && _STORE.lastStatus.name == "browse") {
       this.initEdit(_STORE.appStatus.data.layerId, true);
     }
-    if (_STORE.lastStatus.name == "edit") {
+    if (_STORE.appStatus.name == "browse" && _STORE.lastStatus.name == "edit") {
+      this.initEdit(_STORE.appStatus.data.layerId);
+    }
+    if (_STORE.appStatus.name == "browse" && _STORE.lastStatus.name == "editFeature") {
       this.initEdit(_STORE.lastStatus.data.layerId);
-      if (_STORE.lastStatus.data.feature) {
+      _STORE.lastStatus.data.feature.disableEdit();
+    }
+    if (_STORE.lastStatus.name == "editFeature" && _STORE.appStatus.name == "edit") {
+      if (_STORE.lastStatus.data.feature && !_STORE.appStatus.data.feature) {
         _STORE.lastStatus.data.feature.disableEdit();
       }
     }
